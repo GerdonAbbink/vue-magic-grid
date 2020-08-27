@@ -37,7 +37,7 @@ export default {
   },
 
   watch: {
-    items (itemsModified) {
+    items () {
       this.positionItems()
     }
   },
@@ -51,16 +51,12 @@ export default {
       if (this.isEverythingInitialized()) {
         this.positionItems()
 
-        window.addEventListener('resize', () => {
-          setTimeout(() => {
-            this.positionItems()
-          }, 100)
-        })
-        window.addEventListener('scroll', () => {
-          setTimeout(() => {
-            this.positionItems()
-          }, 100)
-        })
+        window.addEventListener('resize', window.requestAnimationFrame(() => {
+          this.positionItems()
+        }))
+        window.addEventListener('scroll', window.requestAnimationFrame(() => {
+          this.positionItems()
+        }))
       } else {
         this.checkIfReady()
       }

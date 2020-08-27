@@ -37,8 +37,7 @@ export default {
   },
 
   watch: {
-    items (itemsModified) {
-      console.log('itemsModified: ', itemsModified)
+    '$el.children' () {
       this.positionItems()
     }
   },
@@ -53,14 +52,10 @@ export default {
         this.positionItems()
 
         window.addEventListener('resize', () => {
-          setTimeout(() => {
-            this.positionItems()
-          }, 100)
+          this.positionItems()
         })
         window.addEventListener('scroll', () => {
-          setTimeout(() => {
-            this.positionItems()
-          }, 100)
+          this.positionItems()
         })
       } else {
         this.checkIfReady()
@@ -108,7 +103,7 @@ export default {
     },
 
     colWidth () {
-      return this.items[0].getBoundingClientRect().width + this.gap
+      return this.items[0] ? this.items[0].getBoundingClientRect().width + this.gap : this.maxColWidth + this.gap
     },
 
     setup () {
@@ -146,23 +141,25 @@ export default {
     },
 
     positionItems () {
-      const setupCalculated = this.setup()
-      const cols = setupCalculated.cols
-      const wSpace = setupCalculated.wSpace
+      window.requestAnimationFrame(() => {
+        const setupCalculated = this.setup()
+        const cols = setupCalculated.cols
+        const wSpace = setupCalculated.wSpace
 
-      Array.prototype.forEach.call(this.items, (item, i) => {
-        const min = this.nextCol(cols, i)
-        const left = min.index * this.colWidth() + wSpace
+        Array.prototype.forEach.call(this.items, (item, i) => {
+          const min = this.nextCol(cols, i)
+          const left = min.index * this.colWidth() + wSpace
 
-        const leftStr = left + 'px'
-        const topStr = min.height + min.top + 'px'
-        this.setElementCss(item, leftStr, topStr)
+          const leftStr = left + 'px'
+          const topStr = min.height + min.top + 'px'
+          this.setElementCss(item, leftStr, topStr)
 
-        min.height += min.top + item.getBoundingClientRect().height
-        min.top = this.gap
+          min.height += min.top + item.getBoundingClientRect().height
+          min.top = this.gap
+        })
+
+        this.$el.style.height = this.getHighestColumn(cols).height + 'px'
       })
-
-      this.$el.style.height = this.getHighestColumn(cols).height + 'px'
     },
 
     getHighestColumn (cols) {
