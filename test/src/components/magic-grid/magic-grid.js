@@ -4,15 +4,15 @@ export default {
 
   props: {
     wrapper: {
-      type: String, // Required. Class or id of the container.
+      type: String,
       default: 'wrapper'
     },
     gap: {
-      type: Number, // Optional. Space between items. Default: 32px
+      type: Number,
       default: 32
     },
     maxCols: {
-      type: Number, // Maximum number of colums. Default: Infinite
+      type: Number,
       default: 5
     },
     maxColWidth: {
@@ -20,8 +20,12 @@ export default {
       default: 280
     },
     animate: {
-      type: Boolean, // Animate item positioning. Default: false.
+      type: Boolean,
       default: true
+    },
+    useMin: {
+      type: Boolean,
+      default: false
     }
   },
 
@@ -32,45 +36,71 @@ export default {
     }
   },
 
+  watch: {
+    items (itemsModified) {
+      console.log('itemsModified: ', itemsModified)
+      this.positionItems()
+    }
+  },
+
   mounted () {
     this.waitUntilReady()
   },
 
   methods: {
     waitUntilReady () {
-      if (this.isReady()) {
+      if (this.isEverythingInitialized()) {
         this.positionItems()
 
         window.addEventListener('resize', () => {
-          setTimeout(this.positionItems(), 200)
+          setTimeout(() => {
+            this.positionItems()
+          }, 100)
         })
-      } else this.getReady()
+        window.addEventListener('scroll', () => {
+          setTimeout(() => {
+            this.positionItems()
+          }, 100)
+        })
+      } else {
+        this.checkIfReady()
+      }
     },
 
-    isReady () {
+    isEverythingInitialized () {
       return this.$el && this.items.length > 0
     },
 
-    getReady () {
-      let interval = setInterval(() => {
+    checkIfReady () {
+      const interval = setInterval(() => {
         this.items = this.$el.children
 
-        if (this.isReady()) {
+        if (this.isEverythingInitialized()) {
           clearInterval(interval)
           this.init()
         }
       }, 100)
     },
 
+    setElementCss (item, left = 0, top = 0) {
+      item.style.position = 'absolute'
+      item.style.maxWidth = this.maxColWidth + 'px'
+      item.style.left = left
+      item.style.top = top
+      if (this.animate) {
+        item.style.transition = 'top, left 0.2s ease'
+      }
+    },
+
     init () {
-      if (!this.isReady() || this.started) return
+      if (!this.isEverythingInitialized() || this.started) {
+        return
+      }
 
       this.$el.style.position = 'relative'
 
       Array.prototype.forEach.call(this.items, item => {
-        item.style.position = 'absolute'
-        item.style.maxWidth = this.maxColWidth + 'px'
-        if (this.animate) item.style.transition = 'top, left 0.2s ease'
+        this.setElementCss(item)
       })
 
       this.started = true
@@ -82,9 +112,9 @@ export default {
     },
 
     setup () {
-      let width = this.$el.getBoundingClientRect().width
+      const width = this.$el.getBoundingClientRect().width
+      const cols = []
       let numCols = Math.floor(width / this.colWidth()) || 1
-      let cols = []
 
       if (this.maxCols && numCols > this.maxCols) {
         numCols = this.maxCols
@@ -99,7 +129,7 @@ export default {
       }
 
       let wSpace = width - numCols * this.colWidth() + this.gap
-
+      wSpace = Math.floor(wSpace / 2)
       return {
         cols,
         wSpace
@@ -107,49 +137,56 @@ export default {
     },
 
     nextCol (cols, i) {
-      if (this.useMin) return this.getMin(cols)
+      if (this.useMin) {
+        return this.getShortestColumn(cols)
+      }
 
-      return cols[i % cols.length]
+      const columnIndex = i % cols.length
+      return cols[columnIndex]
     },
 
     positionItems () {
-      let { cols, wSpace } = this.setup()
-
-      wSpace = Math.floor(wSpace / 2)
+      const setupCalculated = this.setup()
+      const cols = setupCalculated.cols
+      const wSpace = setupCalculated.wSpace
 
       Array.prototype.forEach.call(this.items, (item, i) => {
-        let min = this.nextCol(cols, i)
-        let left = min.index * this.colWidth() + wSpace
+        const min = this.nextCol(cols, i)
+        const left = min.index * this.colWidth() + wSpace
 
-        item.style.left = left + 'px'
-        item.style.top = min.height + min.top + 'px'
+        const leftStr = left + 'px'
+        const topStr = min.height + min.top + 'px'
+        this.setElementCss(item, leftStr, topStr)
 
         min.height += min.top + item.getBoundingClientRect().height
         min.top = this.gap
       })
 
-      this.$el.style.height = this.getMax(cols).height + 'px'
+      this.$el.style.height = this.getHighestColumn(cols).height + 'px'
     },
 
-    getMax (cols) {
+    getHighestColumn (cols) {
       let max = cols[0]
 
-      for (let col of cols) {
-        if (col.height > max.height) max = col
+      for (const col of cols) {
+        if (col.height > max.height) {
+          max = col
+        }
       }
 
       return max
     },
 
-    getMin (cols) {
+    getShortestColumn (cols) {
       let min = cols[0]
 
-      for (let col of cols) {
-        if (col.height < min.height) min = col
+      for (const col of cols) {
+        if (col.height < min.height) {
+          min = col
+        }
       }
 
       return min
     }
   }
-
 }
