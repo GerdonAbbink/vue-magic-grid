@@ -2,15 +2,13 @@
 
   <section class="section">
     <div class="container">
-
-      <magic-grid>
+      <magic-grid v-slot:default="{ update }">
         <card
           v-for="(post, i) in posts"
           :key="i"
           :title="post.title"
-          :body="post.body" />
+          :body="post.body" @click="update" />
       </magic-grid>
-
     </div>
   </section>
 

@@ -8,7 +8,7 @@
     </div>
 
     <div class="card-content content">
-      <h4>{{ title }}</h4>
+      <h4 @click="$emit('click')">{{ title }}</h4>
       <p>{{ body }}</p>
     </div>
   </div>

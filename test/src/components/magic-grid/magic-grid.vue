@@ -1,7 +1,7 @@
 <template>
 
   <div :class="[wrapper]">
-    <slot />
+    <slot :update="positionItems" />
   </div>
 
 </template>
