@@ -26,6 +26,10 @@ export default {
     useMin: {
       type: Boolean,
       default: false
+    },
+    center: {
+      type: Boolean,
+      default: true
     }
   },
 
@@ -144,7 +148,7 @@ export default {
       window.requestAnimationFrame(() => {
         const setupCalculated = this.setup()
         const cols = setupCalculated.cols
-        const wSpace = setupCalculated.wSpace
+        const wSpace = this.center ? setupCalculated.wSpace : 0
 
         Array.prototype.forEach.call(this.items, (item, i) => {
           const min = this.nextCol(cols, i)
